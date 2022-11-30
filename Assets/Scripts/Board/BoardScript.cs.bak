@@ -1,0 +1,99 @@
+﻿using UnityEngine;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+
+public class BoardScript : MonoBehaviour
+{
+    public GameObject loseButtons, winButtons;
+    public ParticleSystem intersectParticle, winnerParticle, loserParticle;
+    public Sprite loserSprite, winnerSprite, loserBoardSprite, winnerBoardSprite;
+    public SpriteRenderer textRndrr;
+
+    private GUINumberScript guiNumber;
+    private SpriteRenderer sprtRndrr;
+    private Animator anim;
+    private Transform hud;
+
+    void Start()
+    {
+        guiNumber = GetComponentInChildren<GUINumberScript>();
+        sprtRndrr = GetComponent<SpriteRenderer>();
+        anim = GetComponent<Animator>();
+
+        hud = Camera.main.transform.FindChild("HUD");
+        if (hud == null)
+        {
+            Debug.LogError("can not find HUD object");
+        }
+    }
+
+    public void ShowScore(bool lost=false)
+    {
+        GameState.Pause();
+        var minTemp = Camera.main.GetComponent<ChapterLevelScript>().MinWinTemprature;
+        if (lost || GameState.GetTemperature() < minTemp)
+        {
+            OnLose();
+        } else
+        {
+            OnWin();
+        }
+        intersectParticle.Play();
+        anim.SetTrigger("In");
+    }
+
+    private void OnLose()
+    {
+        guiNumber.gameObject.SetActive(false);
+
+        sprtRndrr.sprite = loserBoardSprite;
+        winButtons.SetActive(false);
+        loseButtons.SetActive(true);
+        loserParticle.Play();
+        textRndrr.sprite = loserSprite;
+        SaveScore(false, 0);
+    }
+
+    private void OnWin()
+    {
+        guiNumber.gameObject.SetActive(true);
+
+        sprtRndrr.sprite = winnerBoardSprite;
+        winButtons.SetActive(true);
+        loseButtons.SetActive(false);
+        winnerParticle.Play();
+        textRndrr.sprite = winnerSprite;
+        var coins = GameState.LevelCoins;
+        guiNumber.Number = coins;
+        SaveScore(true, coins);
+    }
+
+    private void SaveScore(bool win, int lvlCoins)
+    {
+        hud.gameObject.SetActive(false); 
+
+        var lastLevel = GameState.GetLastPlayedLevel();
+        if (win)
+        {
+            if ((!lastLevel.Win) || (lvlCoins >= lastLevel.LevelCoins))
+            {
+                lastLevel.Win = true;
+                lastLevel.LevelCoins = lvlCoins;
+
+                GameState.CurrentLevelPurchases = null;
+                GameState.LastFailPurchasedItems = null;
+                GameState.UpdateLevel(lastLevel);
+            }
+        } else
+        {
+            if (!lastLevel.Win)
+            {
+                lastLevel.Win = false;
+                lastLevel.LevelCoins = 0;
+                GameState.UpdateLevel(lastLevel);
+            }
+            GameState.LastFailPurchasedItems = GameState.CurrentLevelPurchases;
+        }
+    }
+}

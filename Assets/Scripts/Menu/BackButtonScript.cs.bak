@@ -1,0 +1,43 @@
+﻿using UnityEngine;
+using System.Collections;
+
+public class BackButtonScript : MonoBehaviour
+{
+	
+    public string previousScene;
+
+    private bool doClick = false;
+    private Animator anim = null;
+    public ParticleSystem ExplodeParticle = null;
+
+    void Start()
+    {
+        anim = GetComponent<Animator>();
+    }
+
+    void Update()
+    {
+        var touchedColl = TouchUtility.GetTouchedCollider(false);
+        if (touchedColl != null)
+        {
+            if (touchedColl == collider2D)
+            {
+                if (ExplodeParticle != null)
+                {
+                    ExplodeParticle.renderer.sortingLayerName = renderer.sortingLayerName;
+                    ExplodeParticle.renderer.sortingOrder = renderer.sortingOrder;
+                    ExplodeParticle.Play();
+                }
+                doClick = true;
+                anim.SetTrigger("Click");
+            }
+        }
+
+        var state = anim.GetCurrentAnimatorStateInfo(0);
+        if (doClick && state.IsName("End"))
+        {
+            Application.LoadLevel(previousScene);
+            doClick = false;
+        }
+    }
+}

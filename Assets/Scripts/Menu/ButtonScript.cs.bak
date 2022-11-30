@@ -1,0 +1,151 @@
+﻿using UnityEngine;
+using System.Collections;
+
+public enum ButtonType
+{
+    None,
+    About,
+    Close,
+    CloseStore,
+    Facebook,
+    MuteFx,
+    MuteMusic,
+    NextLevel,
+    Play,
+    Pause,
+    Resume,
+    Settings,
+    Home,
+    Quit,
+    Refresh,
+    Store,
+    Twitter
+}
+
+[RequireComponent(typeof(Collider2D), typeof(SpriteRenderer))]
+public class ButtonScript : MonoBehaviour
+{
+    public Animator parentPanel;
+    public ButtonType buttonType = ButtonType.None;
+    public ParticleSystem ExplodeParticle = null;
+    public StoreManager storeManager;
+    public float secondsToNormalState = 1.0f;
+    public Animator backgroundFade;
+    private Animator anim = null;
+    private bool doClick = false;
+    void Start()
+    {
+        anim = GetComponent<Animator>();
+        if (backgroundFade != null)
+        {
+            GameState.backgroundFade = backgroundFade;
+        }
+    }
+
+    void OnApplicationPause()
+    {
+        GameState.Pause(true);
+    }
+
+    void Update()
+    {
+        if (buttonType != ButtonType.MuteMusic && buttonType != ButtonType.MuteFx)
+        {
+            secondsToNormalState -= Time.deltaTime;
+            if (secondsToNormalState <= 0)
+            {
+                anim.SetBool("Normal", true);
+            }
+        }
+        var touchedColl = TouchUtility.GetTouchedCollider(false);
+        if (touchedColl != null)
+        {
+            if (touchedColl == collider2D)
+            {
+                if (ExplodeParticle != null)
+                {
+                    ExplodeParticle.renderer.sortingLayerName = renderer.sortingLayerName;
+                    ExplodeParticle.renderer.sortingOrder = renderer.sortingOrder;
+                    ExplodeParticle.Play();
+                }
+                doClick = true;
+                anim.SetTrigger("Click");
+            }
+        }
+
+        var state = anim.GetCurrentAnimatorStateInfo(0);
+        if (doClick && (state.IsName("End") 
+            || buttonType == ButtonType.MuteFx || buttonType == ButtonType.MuteMusic
+            || buttonType == ButtonType.Resume || buttonType == ButtonType.Pause))
+        {
+            switch (buttonType)
+            {
+                case ButtonType.Refresh:
+                    GameState.ChangeTemperature(-1 * GameState.GetTemperature());
+                    Application.LoadLevel(Application.loadedLevel);
+                    break;
+                case ButtonType.Play:
+                    Application.LoadLevel("Chapters");
+                    break;
+                case ButtonType.Pause:
+                    GameState.Pause(true);
+                    break;
+                case ButtonType.Resume:
+                    GameState.Resume(true);
+                    break;
+                case ButtonType.Home:
+                    Application.LoadLevel("Main");
+                    break;
+                case ButtonType.Quit:
+                    Application.Quit();
+                    break;
+                case ButtonType.Facebook:
+                    Application.OpenURL("https://www.facebook.com/choc01ate");
+                    break;
+                case ButtonType.Twitter:
+                    Application.OpenURL("https://twitter.com/choc01atecorp");
+                    break;
+                case ButtonType.MuteFx:
+                    GameState.AudioFx = !GameState.AudioFx;
+                    if (GameState.AudioFx)
+                    {
+                        GetComponent<Animator>().SetTrigger("On");
+                    } else
+                    {
+                        GetComponent<Animator>().SetTrigger("Off");
+                    }
+
+                    break;
+                case ButtonType.MuteMusic:
+                    GameState.AudioMusic = !GameState.AudioMusic;
+                    if (GameState.AudioMusic)
+                    {
+                        GetComponent<Animator>().SetTrigger("On");
+                    } else
+                    {
+                        GetComponent<Animator>().SetTrigger("Off");
+                    }
+                    break;
+                case ButtonType.NextLevel:
+                    Debug.Log(GameState.Chapter);
+                    Debug.Log(GameState.Level);
+                    if (GameState.Level < GameSettings.maxLevelsPerChapter)
+                    {
+                        GameState.Level++;
+                    } else if (GameState.Chapter < GameSettings.maxNumberOfChapters)
+                    {
+                        GameState.Chapter++;
+                    }
+                    LvlMenuScript.OpenLevel(GameState.Chapter, GameState.Level);
+                    break;
+                case ButtonType.CloseStore:
+                    parentPanel.SetTrigger("Hide");
+                    storeManager.BtnPlay.SetActive(true);
+                    storeManager.BtnBack.SetActive(true);
+                    storeManager.EnableAllColliders();
+                    break;
+            }
+            doClick = false;
+        }
+    }
+}

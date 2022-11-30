@@ -1,0 +1,1 @@
+{"pluginName":"IAP","version":"2.2","itemNumber":"IABAndroid-plugin","platform":"Android","items":[{"path":"Assets/Editor/Prime31/PluginManifests/IAPAndroid.json","isFolder":false},{"path":"Assets/Plugins/Android/IABPlugin.jar","isFolder":false},{"path":"Assets/Plugins/InAppBillingAndroid","isFolder":true}]}

@@ -1,0 +1,159 @@
+﻿using UnityEngine;
+using System.Collections;
+
+public class StoreItemScript : HatItemScript
+{
+    #region Definitions
+    public static MouseHouseContainerScript mhcs;
+    public static Transform mouseTrap;
+    public PurchasedItems piKind;
+    public Vector2 itemRelativePosition;    // Works only for wrench item.
+    public float itemEffectivenessTime;     // Works for changer, box of matches and freezer items.
+    public float timeScale = 1.00f;         // Works only for freezer item.
+    public int comboCoefficient;
+    public GameObject[] destroyableParticles;
+    private float remainingTime;            // Works only for changer and freezer items.
+    private bool timerOn;                   // Works only for, box of matches changer and freezer items.
+    private bool isReady;                   // Works only for wrench and mouse items.
+    private PipeScript wrenchPipe;          // Works only for wrench item.
+    private MouseScript trappedMouse;       // Works only for mouse item.
+    #endregion
+    protected override void Start()
+    {
+        base.Start();
+        remainingTime = itemEffectivenessTime;
+        timerOn = false;
+    }
+
+    protected override void Update()
+    {
+        base.Update();
+        switch (piKind)
+        {
+            case PurchasedItems.Wrench:
+                if (isReady && base._anim.GetCurrentAnimatorStateInfo(0).IsName("CheckStatus"))
+                {
+                    Vector3 position = wrenchPipe.transform.position;
+                    position.x += itemRelativePosition.x;
+                    position.y += itemRelativePosition.y;
+                    transform.position = position;
+                    wrenchPipe.RepairPipe();
+                    _anim.SetTrigger("Repair");
+                    foreach (ParticleSystem ps in GetComponentsInChildren<ParticleSystem>())
+                    {
+                        ps.Play();
+                    }
+                    isReady = false;
+                }
+                break;
+            case PurchasedItems.Freezer:
+                if (timerOn)
+                {
+                    remainingTime -= Time.deltaTime;
+                    if (remainingTime <= 0)
+                    {
+                        Time.timeScale = 1.00f;
+                        Destroy(gameObject);
+                    }
+                }
+                break;
+            case PurchasedItems.Changer:
+                if (timerOn)
+                {
+                    remainingTime -= Time.deltaTime;
+                    if (remainingTime <= 0)
+                    {
+                        // Inverse Action
+                        Destroy(gameObject);
+                    }
+                }
+                break;
+            case PurchasedItems.MouseTrap:
+                if (isReady)
+                {
+                    //Destroy(gameObject);
+                }
+                break;
+            case PurchasedItems.BoxOfMatches:
+                if (timerOn)
+                {
+                    remainingTime -= Time.deltaTime;
+                    if (remainingTime <= 0)
+                    {
+                        hat.BoxOfMatches = false;
+                        Destroy(gameObject);
+                    } else
+                    {
+                        //Can be removed, if we know that box of matches will not appear again in this items life time.
+                        hat.BoxOfMatches = true;
+                    }
+                }
+                break;
+            case PurchasedItems.Combo:
+                if (timerOn)
+                {
+                    remainingTime -= Time.deltaTime;
+                    if (remainingTime <= 0)
+                    {
+                        GameState.Combo /= comboCoefficient;
+                        Destroy(gameObject);
+                    }
+                }
+                break;
+        }
+    }
+
+    protected override void Hit()
+    {
+        base.Hit();
+        if (_playSpecial)
+        {
+            switch (piKind)
+            {
+                case PurchasedItems.Wrench:
+                    PipeScript ps = GameState.DequeueDamagedPipe();
+                    if (ps != null)
+                    {
+                        wrenchPipe = ps;
+                        isReady = true;
+                        foreach (BoxCollider2D bs2d in GetComponentsInChildren<BoxCollider2D>())
+                        {
+                            bs2d.enabled = false;
+                        }
+                    }
+                    GameObject.Destroy(gameObject, 5f);
+                    break;
+                case PurchasedItems.Freezer:
+                    timerOn = true;
+                    foreach (GameObject go in destroyableParticles)
+                    {
+                        go.GetComponent<ParticleSystem>().Stop();
+                    }
+                    Time.timeScale = timeScale;
+                    break;
+                case PurchasedItems.Changer:
+                    timerOn = true;
+                    // Appropriate Action
+                    break;
+                case PurchasedItems.MouseTrap:
+                    mhcs.FuckAMouse();
+                    isReady = true;
+                    break;
+                case PurchasedItems.MolotovCocktails:
+                    //Debug.Log(transform.GetChild(0).GetChild(2).gameObject.name);
+                    foreach (GameObject go in destroyableParticles)
+                    {
+                        go.GetComponent<ParticleSystem>().Stop();
+                    }
+                    break;
+                case PurchasedItems.BoxOfMatches:
+                    timerOn = hat.BoxOfMatches = true;
+                    break;
+                case PurchasedItems.Combo:
+                    timerOn = true;
+                    GameState.Combo *= comboCoefficient;
+                    break;
+            }
+        }
+    }
+}

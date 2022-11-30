@@ -1,0 +1,90 @@
+﻿using UnityEngine;
+using System.Collections;
+
+public class HatItemsContainerScript : MonoBehaviour
+{
+
+    // Use this for initialization
+    public float minimumItemsToHit;
+    public float maximumTimeToReact;
+    public Animator praiseAnim;
+    public Sprite[] excellent;
+    public Sprite[] good;
+    public Sprite[] dreadful;
+    public SpriteRenderer spriteRenderer;
+    private int goodRate, badRate;
+    private float t;
+    private ParticleSystem ps;
+    void Start()
+    {
+        ps = praiseAnim.gameObject.GetComponentInChildren<ParticleSystem>();
+        ps.renderer.sortingLayerName = praiseAnim.renderer.sortingLayerName;
+        ps.renderer.sortingOrder = praiseAnim.renderer.sortingOrder;
+        goodRate = badRate = 0;
+        t = 0.0f;
+    }
+	
+    void Update()
+    {
+        t += Time.deltaTime;
+    }
+
+    public void RecordItem(bool positivity)
+    {
+        if (positivity)
+        {
+            if (goodRate <= 0)
+            {
+                t = 0.0f;
+            }
+            goodRate++;
+            badRate = 0;
+        } else
+        {
+            if (badRate <= 0)
+            {
+                t = 0.0f;
+            }
+            badRate++;
+            goodRate = 0;
+        }
+        if (goodRate >= minimumItemsToHit)
+        {
+            AnimatorStateInfo state = praiseAnim.GetCurrentAnimatorStateInfo(0);
+            if (t > 0.0f && state.IsName("Idle"))
+            {
+                float gbyt = (float)(goodRate / (5.5f * t));
+                if (gbyt > 2.0f)
+                {
+                    Sprite currentsp = excellent [Random.Range(0, excellent.Length)];
+                    spriteRenderer.sprite = currentsp;
+                    praiseAnim.SetTrigger("In");
+                } else if (gbyt > 0.5f)
+                {
+                    Sprite currentsp = good [Random.Range(0, good.Length)];
+                    spriteRenderer.sprite = currentsp;
+                    praiseAnim.SetTrigger("In");
+                }
+                ps.Play();
+            }
+            t = 0.0f;
+            goodRate = 0;
+        } else if (badRate >= minimumItemsToHit)
+        {
+            AnimatorStateInfo state = praiseAnim.GetCurrentAnimatorStateInfo(0);
+            if (t > 0.0f && state.IsName("Idle"))
+            {
+                float bbyt = (float)(badRate / (5.5f * t));
+                if (bbyt > 0.5f)
+                {
+                    Sprite currentsp = dreadful [Random.Range(0, dreadful.Length)];
+                    spriteRenderer.sprite = currentsp;
+                    praiseAnim.SetTrigger("In");
+                }
+                ps.Play();
+            }
+            t = 0.0f;
+            badRate = 0;
+        }
+    }
+}

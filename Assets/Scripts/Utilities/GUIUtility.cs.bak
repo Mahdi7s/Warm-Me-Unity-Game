@@ -1,0 +1,71 @@
+﻿using UnityEngine;
+using System.Collections;
+
+/// <summary>
+/// All Must be used in OnGUI method
+/// </summary>
+public static class GUIUtility
+{
+    public static Transform[] digit;
+
+    public static void ShowText(GUIText gtext, string text, Vector2 margin)
+    {
+        GUI.skin.font = gtext.font;
+        GUI.skin.label.fontSize = gtext.fontSize;
+        GUI.contentColor = Color.black;
+		
+        var pos2 = Camera.main.WorldToScreenPoint(new Vector3(gtext.transform.localPosition.x, gtext.transform.localPosition.y, 0));
+        var pos = new Rect(pos2.x + margin.x, pos2.y + margin.y, 1000, 5000);
+        GUI.Label(pos, text);
+    }
+
+    public static void DrawGUITextureAsText(Transform parent, int number, string sortingLayerName, int sortingOrder, float space)
+    {
+        Vector3 position = parent.position;
+        Vector3 scale = parent.localScale;
+        int cntr;
+        Transform temp;
+        char[] print = number.ToString().ToCharArray();
+
+        for (cntr=0; cntr<parent.childCount; cntr++)
+        {
+            GameObject.Destroy(parent.GetChild(cntr).gameObject);
+        }
+
+        for (cntr=0; cntr<print.Length; cntr++)
+        {
+            int index = print [cntr] - '0';
+            temp = (Transform)Object.Instantiate(digit [index], position, Quaternion.identity);
+            temp.renderer.sortingLayerName = sortingLayerName;
+            temp.renderer.sortingOrder = sortingOrder;
+            temp.parent = parent;
+            temp.localScale = scale;
+            position.x += temp.renderer.bounds.size.x + space;
+        }
+    }
+
+    public static Vector2 GetViewSize()
+    {
+        var cam = Camera.main;
+        var height = cam.orthographicSize * 2.0f;
+        var width = height * cam.aspect;
+        
+        return new Vector2(width, height);
+    }
+    
+    public static Vector2 GetSpriteSize(Sprite spr)
+    {
+        return new Vector2(spr.bounds.size.x, spr.bounds.size.y);
+    }
+    
+    public static Vector3 ToWorld(Vector3 v3)
+    {
+        var viewSize = GetViewSize();
+        return new Vector3(v3.x - viewSize.x / 2, v3.y - viewSize.y / 2, v3.z);
+    }
+
+    public static void DrawGUISlider(Vector3 position, int value)
+    {
+        GUI.HorizontalSlider(new Rect(10, 50, 250, 30), (int)5.0f, 0.0f, 10.0f);
+    }
+}

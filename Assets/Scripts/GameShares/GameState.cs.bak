@@ -1,0 +1,477 @@
+using UnityEngine;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using System;
+
+public static class GameState
+{
+    private static int totalCoins, levelCoins;
+    private static float temperature;
+    private static string temp;
+    private static Queue<PipeScript> damagedPipeScriptsQueue = new Queue<PipeScript>();
+    private static Dictionary<string, string> dictionary = new Dictionary<string, string>();
+    //private static ChapterLevelScript cls = Camera.main.GetComponent<ChapterLevelScript>();
+    private static List<LevelModel> levelModelList = null;
+    private static Dictionary<PurchasedItems, int> lastFailPurchasedItems = new Dictionary<PurchasedItems, int>();
+    private static bool _audioMusic = true, _audioFx = true;
+
+    public static int Combo = 1;
+    // public static int numberOfDamagedPipes;
+    public static PauseScript pauseScript;
+    public static Animator backgroundFade;
+    public static float itemNormalSeconds{ set; get; }
+    private static string GetPropertyValue(string propertyName)
+    {
+        if (dictionary.TryGetValue(propertyName, out temp))
+        {
+            return temp;
+        } else
+        {
+            temp = PlayerPrefs.GetString(propertyName);
+            if (temp != "")
+            {
+                dictionary.Add(propertyName, temp);
+            }
+            return temp;
+        }
+    }
+    
+    private static void SetPropertyValue(string propertyName, string value)
+    {
+        if (propertyName != "" && value != "")
+        {
+            if (dictionary.TryGetValue(propertyName, out temp))
+            {
+                if (temp != value)
+                {
+                    PlayerPrefs.SetString(propertyName, value);
+                    PlayerPrefs.Save();
+                    dictionary [propertyName] = value;
+                }
+            } else
+            {
+                PlayerPrefs.SetString(propertyName, value);
+                PlayerPrefs.Save();
+                dictionary.Add(propertyName, value);
+            }
+        }
+    }
+
+    public static void IntializeProperties()
+    {
+        if (GetPropertyValue("IsFirstLoad") == "" || GetPropertyValue("IsFirstLoad") == "true")
+        {
+            SetPropertyValue("Chapter", "1");
+            SetPropertyValue("Level", "1");
+            SetPropertyValue("AdMobEnabled", "true");
+            SetPropertyValue("TotalCoins", "0");
+            SetPropertyValue("CLT", (new LevelModel()).ToString());
+            SetPropertyValue("IsFirstLoad", "false");
+        }
+        AudioMusic = AudioFx = true;
+    }
+
+    #region Levels Data Codes
+
+    public static List<LevelModel> LevelModelList
+    {
+        get
+        {
+            if (levelModelList == null || !levelModelList.Any())
+            {
+                levelModelList = new List<LevelModel>();
+                string chapterLevelCoin = GetPropertyValue("CLT");
+                if (!string.IsNullOrEmpty(chapterLevelCoin)){
+                    LevelModel temp;
+                    string[] chapterLevelCoinArray = chapterLevelCoin.Split('|');
+                    for (int cntr = 0; cntr < chapterLevelCoinArray.Length; cntr++)
+                    {
+                        temp = new LevelModel(chapterLevelCoinArray [cntr]);
+                        levelModelList.Add(temp);
+                    }
+                    LevelModelList = levelModelList;
+                }
+            }
+            if (levelModelList == null || !levelModelList.Any())
+            {
+                levelModelList.Add(new LevelModel());
+                LevelModelList = levelModelList;
+            }
+            return levelModelList;
+            /*
+            return new List<LevelModel>(new[]{
+                new LevelModel{ Chapter=1, Level=1, Win=true,LevelCoins=100},
+                new LevelModel{ Chapter=1, Level=2, Win=true,LevelCoins=100},
+                new LevelModel{ Chapter=1, Level=3, Win=true,LevelCoins=100},
+                new LevelModel{ Chapter=1, Level=4, Win=true,LevelCoins=100},
+                new LevelModel{ Chapter=1, Level=5, Win=true,LevelCoins=100},
+                new LevelModel{ Chapter=1, Level=6, Win=true,LevelCoins=100},
+                new LevelModel{ Chapter=1, Level=7, Win=true,LevelCoins=100},
+                new LevelModel{ Chapter=1, Level=8, Win=true,LevelCoins=100},
+                new LevelModel{ Chapter=1, Level=9, Win=true,LevelCoins=100},
+
+                new LevelModel{ Chapter=2, Level=1, Win=true,LevelCoins=100},
+                new LevelModel{ Chapter=2, Level=2, Win=true,LevelCoins=100},
+                new LevelModel{ Chapter=2, Level=3, Win=true,LevelCoins=100},
+                new LevelModel{ Chapter=2, Level=4, Win=true,LevelCoins=100},
+                new LevelModel{ Chapter=2, Level=5, Win=true,LevelCoins=100},
+                new LevelModel{ Chapter=2, Level=6, Win=true,LevelCoins=100},
+                new LevelModel{ Chapter=2, Level=7, Win=true,LevelCoins=100},
+                new LevelModel{ Chapter=2, Level=8, Win=true,LevelCoins=100},
+                new LevelModel{ Chapter=2, Level=9, Win=true,LevelCoins=100},
+
+                new LevelModel{ Chapter=3, Level=1, Win=true,LevelCoins=100},
+                new LevelModel{ Chapter=3, Level=2, Win=true,LevelCoins=100},
+                new LevelModel{ Chapter=3, Level=3, Win=true,LevelCoins=100},
+                new LevelModel{ Chapter=3, Level=4, Win=true,LevelCoins=100},
+                new LevelModel{ Chapter=3, Level=5, Win=true,LevelCoins=100},
+                new LevelModel{ Chapter=3, Level=6, Win=true,LevelCoins=100},
+                new LevelModel{ Chapter=3, Level=7, Win=true,LevelCoins=100},
+                new LevelModel{ Chapter=3, Level=8, Win=true,LevelCoins=100},
+                new LevelModel{ Chapter=3, Level=9, Win=true,LevelCoins=100},
+
+                new LevelModel{ Chapter=4, Level=1, Win=true,LevelCoins=100},
+                new LevelModel{ Chapter=4, Level=2, Win=true,LevelCoins=100},
+                new LevelModel{ Chapter=4, Level=3, Win=true,LevelCoins=100},
+                new LevelModel{ Chapter=4, Level=4, Win=true,LevelCoins=100},
+                new LevelModel{ Chapter=4, Level=5, Win=true,LevelCoins=100},
+                new LevelModel{ Chapter=4, Level=6, Win=true,LevelCoins=100},
+                new LevelModel{ Chapter=4, Level=7, Win=true,LevelCoins=100},
+                new LevelModel{ Chapter=4, Level=8, Win=true,LevelCoins=100},
+                new LevelModel{ Chapter=4, Level=9, Win=true,LevelCoins=100},
+
+                new LevelModel{ Chapter=5, Level=1, Win=true,LevelCoins=100},
+                new LevelModel{ Chapter=5, Level=2, Win=true,LevelCoins=100},
+                new LevelModel{ Chapter=5, Level=3, Win=true,LevelCoins=100},
+                new LevelModel{ Chapter=5, Level=4, Win=true,LevelCoins=100},
+                new LevelModel{ Chapter=5, Level=5, Win=true,LevelCoins=100},
+                new LevelModel{ Chapter=5, Level=6, Win=true,LevelCoins=100},
+                new LevelModel{ Chapter=5, Level=7, Win=true,LevelCoins=100},
+                new LevelModel{ Chapter=5, Level=8, Win=true,LevelCoins=100},
+                new LevelModel{ Chapter=5, Level=9, Win=true,LevelCoins=100},
+
+                new LevelModel{ Chapter=6, Level=1, Win=true,LevelCoins=100},
+                new LevelModel{ Chapter=6, Level=2, Win=true,LevelCoins=100},
+                new LevelModel{ Chapter=6, Level=3, Win=true,LevelCoins=100},
+                new LevelModel{ Chapter=6, Level=4, Win=true,LevelCoins=100},
+                new LevelModel{ Chapter=6, Level=5, Win=true,LevelCoins=100},
+                new LevelModel{ Chapter=6, Level=6, Win=true,LevelCoins=100},
+                new LevelModel{ Chapter=6, Level=7, Win=true,LevelCoins=100},
+                new LevelModel{ Chapter=6, Level=8, Win=true,LevelCoins=100},
+                new LevelModel{ Chapter=6, Level=9, Win=true,LevelCoins=100}
+            });
+            */
+        }
+        set
+        {
+            LevelModel[] lm = new LevelModel[value.Count];
+            value.CopyTo(lm);
+            string clt = "";
+            for (int cntr=0; cntr<lm.Length; cntr++)
+            {
+                clt += lm [cntr].ToString() + '|';
+            }
+            clt = clt.Substring(0, clt.Length - 1);
+            SetPropertyValue("CLT", clt);
+            levelModelList = value;
+        }
+    }
+
+    public static LevelModel GetLastPlayedLevel()
+    {
+        LevelModel retval = null;
+        if (GameState.LevelModelList == null || GameState.LevelModelList.Any())
+        {
+            retval = GameState.LevelModelList.OrderBy(x => (x.Chapter * 100) + x.Level).LastOrDefault();
+        } 
+
+        if (retval == null)
+        {
+            retval = new LevelModel(); // the 1st chapter & 1st level !
+        }
+
+        return retval;
+    }
+
+    public static void UpdateLevel(LevelModel model)
+    {
+        var levels = LevelModelList;
+        //var removedCount = levels.RemoveAll(x => x.Chapter == model.Chapter && x.Level == model.Level);
+        levels.Add(model);
+
+        LevelModelList = levels;
+    }
+
+    public static void OpenLevelIfNotOpened(int chapter, int level)
+    {
+        if (!LevelModelList.Any(x => x.Chapter == chapter && x.Level == level))
+        {
+            var model = LevelModelList;
+            model.Add(new LevelModel{ Chapter=chapter, Level=level, Win=false});
+            LevelModelList = model;
+        }
+    }
+
+    public static void DeleteLevel(LevelModel model)
+    {
+        var levels = LevelModelList;
+        levels.RemoveAll(x => x.Chapter == model.Chapter && x.Level == model.Level);
+    }   
+
+    #endregion
+
+    public static Dictionary<PurchasedItems, int> CurrentLevelPurchases
+    {
+        get;
+        set;
+    }
+
+    public static Dictionary<PurchasedItems, int> LastFailPurchasedItems
+    {
+        get
+        {
+            if (lastFailPurchasedItems == null || !lastFailPurchasedItems.Any())
+            {
+                if (!PlayerPrefs.HasKey("LastFailPurchasedItems"))
+                {
+                    PlayerPrefs.SetString("LastFailPurchasedItems", string.Empty);
+                }
+                var str = PlayerPrefs.GetString("LastFailPurchasedItems");
+                var keyvalues = str.Split(new[]{"|"}, StringSplitOptions.RemoveEmptyEntries);
+                lastFailPurchasedItems = keyvalues.Select(x => x.Split('-')).ToDictionary(x => (PurchasedItems)Enum.Parse(typeof(PurchasedItems), x [0]), x => int.Parse(x [1]));
+            }
+            return lastFailPurchasedItems;
+        }
+        set
+        {
+            //string toSave = string.Empty;
+            if (value == null || !value.Any())
+            {
+                lastFailPurchasedItems.Clear();
+            } else
+            {
+                //var items = value.Aggregate(string.Empty, (curr, item) => curr + string.Format("{0}-{1}|", item.Key.ToString(), item.Value));
+                lastFailPurchasedItems = value;
+            }           
+            PlayerPrefs.SetString("LastFailPurchasedItems", string.Empty);
+        }
+    }
+
+    public static int Chapter
+    {
+        get
+        {
+            return int.Parse(GetPropertyValue("Chapter"));
+        }
+        set
+        {
+            SetPropertyValue("Chapter", value.ToString());
+        }
+    }
+
+    public static int Level
+    {
+        get
+        {
+            return int.Parse(GetPropertyValue("Level"));
+        }
+        set
+        {
+            SetPropertyValue("Level", value.ToString());
+            //Time.timeScale = Mathf.Pow(1.1f, value - 1);
+        }
+    }
+
+    public static DateTime LastFreeCoinChanceTime
+    {
+        get
+        { 
+            var freeCoinChanceTimeStr = GetPropertyValue("LastFreeCoinChanceTime");
+            if (!string.IsNullOrEmpty(freeCoinChanceTimeStr))
+            {
+                return DateTime.Parse(freeCoinChanceTimeStr);
+            }
+            return DateTime.MinValue;
+        }
+        set
+        {
+            SetPropertyValue("LastFreeCoinChanceTime", value.ToString());
+        }
+    }
+
+    public static PlayMode PlayStatus
+    {
+        set;
+        get;
+    }
+
+    public static ScoreScript ScrScrpt
+    {
+        get;
+        set;
+    }
+
+    public static PipeScript[] PipeScripts
+    {
+        get;
+        set;
+    }
+
+    public static int NumberOfPipes
+    {
+        get
+        {
+            return PipeScripts.Length;
+        }
+    }
+
+    public static bool AdMobEnabled
+    {
+        get
+        {
+            return bool.Parse(GetPropertyValue("AdMobEnabled"));
+        }
+        set
+        {
+            SetPropertyValue("AdMobEnabled", value.ToString());
+        }
+    }
+
+    public static bool AudioFx
+    {
+        get
+        {
+            return _audioFx;
+        }       
+        set
+        {
+            _audioFx = value;
+        }
+    }
+
+    public static bool AudioMusic
+    {
+        get
+        {
+            return _audioMusic;
+        }       
+        set
+        {
+            _audioMusic = value;
+        }
+    }
+
+    public static void ChangeTemperature(float tempChange)
+    {
+        var chapterScr = Camera.main.GetComponent<ChapterLevelScript>();
+        temperature = Mathf.Clamp(temperature + tempChange, 0, chapterScr.MaxTemprature);
+    }
+
+    public static float GetTemperature()
+    {
+        return temperature;
+    }
+
+    public static void ChangeStoreCoins(int coins)
+    {
+        if (totalCoins >= 0)
+        {
+            SetPropertyValue("TotalCoins", coins.ToString());
+        }
+    }
+
+    public static int GetStoreCoins()
+    {
+        var tStr = GetPropertyValue("TotalCoins");
+        int retval = 0;
+        if (int.TryParse(tStr, out retval))
+        {
+
+        }
+        return retval;
+    }
+
+    public static int GetAllCoins()
+    {
+        return GetStoreCoins() + LevelModelList.Sum(x => x.LevelCoins);
+    }
+
+    public static int LevelCoins
+    {
+        set
+        {
+            levelCoins = value;
+            ScrScrpt.UpdateScore();
+        }
+        get
+        {
+            return levelCoins;
+        }
+    }
+
+    public static void EnqueueDamagedPipe(PipeScript ps)
+    {
+        damagedPipeScriptsQueue.Enqueue(ps);
+        //numberOfDamagedPipes++;
+    }
+
+    public static PipeScript DequeueDamagedPipe()
+    {
+        if (damagedPipeScriptsQueue.Count > 0)
+        {
+            return damagedPipeScriptsQueue.Dequeue();
+            //numberOfDamagedPipes--;
+        }
+        return null;
+    }
+
+    public static bool Pause(bool withMenuAnim = false)
+    {
+        if (pauseScript != null && !pauseScript.IsGamePaused())
+        {
+            pauseScript.PauseAll();
+            if (withMenuAnim)
+            {
+                pauseScript.InGameMenuAnim.SetBool("Out", false);
+                pauseScript.InGameMenuAnim.SetTrigger("In");
+                //Debug.Log("Triggerd.");
+            }
+            if (backgroundFade != null)
+            {
+                backgroundFade.SetBool("FadeOut", false);
+                backgroundFade.SetTrigger("FadeIn");
+            }
+            return true;
+        }
+        return false;
+    }
+
+    public static bool Resume(bool withMenuAnim = false)
+    {
+        if (pauseScript != null && pauseScript.IsGamePaused())
+        {
+            pauseScript.ResumeAll();
+            if (withMenuAnim)
+            {
+                pauseScript.InGameMenuAnim.SetBool("In", false);
+                pauseScript.InGameMenuAnim.SetTrigger("Out");
+            }
+            if (backgroundFade != null)
+            {
+                backgroundFade.SetBool("FadeIn", false);
+                backgroundFade.SetTrigger("FadeOut");
+            }
+            return true;
+        }
+        return false;
+    }
+
+    public static void Reset()
+    {
+        levelCoins = 0;
+        temperature = 0.0f;
+        damagedPipeScriptsQueue.Clear();
+        Combo = 1;
+    }
+}

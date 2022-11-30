@@ -1,0 +1,86 @@
+﻿using UnityEngine;
+using System.Collections;
+
+public class ThermometerScript : PausableBehaviour  // MonoBehaviour
+{
+    public GameObject degreeSymbol;
+    public GameObject degreeCapSymbol;
+    public float temperatureDecreaseStep;
+    public float raiseSpeed;
+    public float maxScaleOfDegreeSymbol;
+    public float minScaleOfDegreeSymbol;
+    public float yCorrection;
+    public float CurrentTemp;
+
+    Vector3 position;
+    Vector3 currentPosition;
+    Vector3 scale;
+    
+    float raiseScalePerDegree;
+    float lastTemp;
+    float currentTemp;
+    float y;
+    float temp; 
+    Animator anim;
+
+    float minTemp;
+    float maxTemp;
+
+    void Start()
+    {
+        var scr = Camera.main.GetComponent<ChapterLevelScript>();
+        minTemp = 0;//scr.MinWinTemprature;
+        maxTemp = scr.MaxTemprature;
+
+        if (temperatureDecreaseStep > 0)
+        {
+            temperatureDecreaseStep *= -1;
+        }
+        raiseScalePerDegree = (maxScaleOfDegreeSymbol - minScaleOfDegreeSymbol) / (maxTemp - minTemp);
+        currentTemp = lastTemp = minTemp;
+        scale = degreeSymbol.transform.localScale;
+        scale.y = minScaleOfDegreeSymbol;
+        position = currentPosition = degreeSymbol.transform.position;
+        degreeSymbol.transform.localScale = scale;
+        y = degreeSymbol.GetComponent<SpriteRenderer>().sprite.bounds.size.y;
+        anim = GetComponent<Animator>();
+    }
+    
+    protected override void PUpdate()
+    {
+        temp = GameState.GetTemperature();
+        CurrentTemp = temp;
+        var animState = anim.GetCurrentAnimatorStateInfo(0);
+
+        if (currentTemp < temp - 1)
+        {
+            currentTemp = Mathf.Lerp(currentTemp, temp, raiseSpeed * Time.deltaTime);
+            scale.y += (currentTemp - lastTemp) * raiseScalePerDegree;
+            anim.SetInteger("Heat", 1);
+        } else if (currentTemp > temp + 1)
+        {
+            currentTemp = Mathf.Lerp(temp, currentTemp, 1.0f - (raiseSpeed * Time.deltaTime));
+            scale.y -= (lastTemp - currentTemp) * raiseScalePerDegree;
+            anim.SetInteger("Heat", -1);
+        } else
+        {
+            currentTemp = temp;
+            scale.y = (temp - minTemp) * raiseScalePerDegree;
+            anim.SetInteger("Heat", 0);
+        }
+        degreeSymbol.transform.localScale = scale;
+        position = currentPosition;
+        position.y += scale.y * (y - yCorrection);
+        degreeCapSymbol.transform.position = position;
+        lastTemp = currentTemp;
+        GameState.ChangeTemperature(Time.deltaTime * temperatureDecreaseStep);
+    }
+
+    protected override void POnGUI()
+    {
+    }
+
+    protected override void PFixedUpdate()
+    {
+    }
+}

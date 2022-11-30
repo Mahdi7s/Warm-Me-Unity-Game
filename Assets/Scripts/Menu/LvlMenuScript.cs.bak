@@ -1,0 +1,70 @@
+﻿using UnityEngine;
+using System.Collections;
+
+[RequireComponent(typeof(Collider2D))]
+public class LvlMenuScript : MonoBehaviour
+{
+    private int _chapter = 0;
+    private int _level = 0;
+
+    public int Chapter { get { return _chapter; } }
+    public int Level { get { return _level; } }
+    public string ElementNamePref = string.Empty;
+    public GUINumberScript Coins = null;
+    public SpriteRenderer Lock = null;
+
+    // ------------------------------------------------------
+    //private Animator _anim = null; // for coins & click events 
+
+    void Awake()
+    {
+        var chapterLevel = name.Replace(ElementNamePref, "").Split('-');
+        _chapter = int.Parse(chapterLevel [0]);
+        _level = int.Parse(chapterLevel [1]);
+        //Lock = GetComponentInChildren<SpriteRenderer>();
+        Lock.enabled = false;  
+    }
+
+    void Start()
+    {
+         
+    }
+	
+	
+    void Update()
+    {
+	
+    }
+
+    // -------------------- public methods ------------------
+
+    public void Initialize(LevelModel model, bool isActive)
+    {
+        Lock.enabled = !isActive;
+        var coins = model == null ? 0 : model.LevelCoins;
+        if (isActive)
+        {
+            Coins.Number = coins;
+        } else
+        {
+            Coins.Hide();
+        }
+    }
+
+    public void OnHit()
+    {
+        if (!Lock.enabled)
+        {
+            OpenLevel(Chapter, Level);
+        }
+    }
+
+    public static void OpenLevel(int chapter, int level)
+    {
+        GameState.Chapter = chapter;
+        GameState.Level = level;
+        GameState.Reset();
+        GameState.OpenLevelIfNotOpened(chapter, level);
+        Application.LoadLevel("Chapter" + chapter.ToString());
+    }
+}

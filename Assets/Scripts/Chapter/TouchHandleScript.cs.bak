@@ -1,0 +1,45 @@
+﻿using UnityEngine;
+using System.Collections;
+
+public class TouchHandleScript : MonoBehaviour
+{
+    void Start()
+    {
+	
+    }
+	
+    void Update()
+    {
+        Collider2D overlapColl = null;
+        if (Input.touchCount == 1)
+        {
+            overlapColl = GetCollObject(Input.GetTouch(0).position);
+        } else if (Input.GetMouseButtonDown(0))
+        {
+            overlapColl = GetCollObject(Input.mousePosition);
+        }
+
+        if (overlapColl != null)
+        {
+            if (overlapColl.transform.parent.tag == "HatItem")
+            {
+                OnItemHit(overlapColl.transform.parent.gameObject);
+            }
+        }       
+    }
+
+    private Collider2D GetCollObject(Vector3 pos)
+    {
+        Vector3 wp = Camera.main.ScreenToWorldPoint(pos);
+        Vector2 touchPos = new Vector2(wp.x, wp.y);
+        
+        var overlapColl = Physics2D.OverlapPoint(touchPos);
+
+        return overlapColl;
+    }
+
+    private void OnItemHit(GameObject gObj)
+    {
+        gObj.SendMessage("Hit");
+    }
+}

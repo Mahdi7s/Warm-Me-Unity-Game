@@ -1,0 +1,50 @@
+﻿using UnityEngine;
+using System.Collections;
+
+[RequireComponent(typeof(Collider2D))]
+public class ChangeSceneScript : MonoBehaviour
+{
+
+    public string GoToScene = string.Empty;
+    public bool CanChangeScene = true;
+
+    public Vector3 OkPlace = Vector3.zero;   
+
+    private Vector3? touchPos = null;
+    private float secsDelay = 0.0f;
+
+    // Use this for initialization
+    void Start()
+    {
+	
+    }
+	
+    // Update is called once per frame
+    void Update()
+    {
+        if (!touchPos.HasValue && Input.GetMouseButtonDown(0))
+        {
+            var coll = TouchUtility.GetCollider2D(Input.mousePosition);
+            //Debug.Log("Slide Yes: " + (coll.gameObject.GetInstanceID() == gameObject.GetInstanceID()).ToString() + ", Pos: " + transform.position.ToString());
+            if ((coll != null && coll.gameObject == gameObject) && transform.position == OkPlace)
+            {
+                touchPos = Input.mousePosition;
+            }
+        } else if (Input.GetMouseButtonUp(0))
+        {
+            //Debug.Log("Touch Yes: " + (touchPos.HasValue && touchPos.Value == Input.mousePosition).ToString() + ", Secs Delay: " + secsDelay.ToString());
+            if (touchPos.HasValue && (Vector3.Distance(Input.mousePosition, touchPos.Value) <= 015f) && secsDelay <= 0.5f)
+            {                    
+                Application.LoadLevel(GoToScene);                    
+            }
+
+            touchPos = null;
+            secsDelay = 0.0f;
+        }
+
+        if (touchPos.HasValue)
+        {
+            secsDelay += Time.deltaTime;
+        }
+    }
+}

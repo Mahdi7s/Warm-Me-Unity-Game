@@ -1,0 +1,321 @@
+﻿using UnityEngine;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+
+public static class PurchaseItemExtensions
+{
+    public static int GetItemCoinPrice(this PurchasedItems item)
+    {
+        int coinPrice = 0;
+        switch (item)
+        {
+            case PurchasedItems.BoxOfMatches:
+                coinPrice = 50;
+                break;
+            case PurchasedItems.MagicWand:
+                coinPrice = 300;//***
+                break;
+            case PurchasedItems.Freezer:
+                coinPrice = 300;
+                break;
+            case PurchasedItems.GoldenEgg:
+                coinPrice = 100;
+                break;
+            case PurchasedItems.MolotovCocktails:
+                coinPrice = 500;
+                break;
+            case PurchasedItems.MouseTrap:
+                coinPrice = 350; //***
+                break;
+            case PurchasedItems.MutipleMatch:
+                coinPrice = 200;
+                break;
+            case PurchasedItems.Wrench:
+                coinPrice = 600;
+                break;
+            case PurchasedItems.Combo:
+                coinPrice = 200;
+                break;
+        }
+        return coinPrice;
+    }
+}
+
+public class StoreManager : MonoBehaviour
+{
+    public SpriteRenderer SelectedItemPicture = null;
+    public SpriteRenderer SelectedItemDescription = null;
+    public GUINumberScript Coins = null;
+    public GameObject tabsPanel;
+    public GameObject TabItemsContainer = null;
+
+    public GameObject ShopPanel = null;
+
+    public GameObject BtnInc = null;
+    public GameObject BtnDec = null;
+    public GameObject BtnShop = null;
+    public GameObject BtnPlay = null;
+
+    public GameObject CoinPack1 = null;
+    public GameObject CoinPack2 = null;
+    public GameObject CoinPack3 = null;
+    public GameObject CoinPack4 = null;
+
+    public ChapterLevelScript ChapterLevelScr = null;
+    public PauseScript PauseScr = null;
+
+    public bool IsTest = true;
+
+    public int MaxItemsCount = 25;
+
+    private TabItemScript _selectedTab = null;
+    private PublishDestination publishDestination;
+    private List<TabItemScript> _tabItems = null;
+    private Animator _imageBoardAnim = null;
+    private Animator _shopPanelAnim = null;
+    private Animator _storePanelAnim = null;
+    private SpriteRenderer descriptionRenderer;
+    private bool _isFirstInAnim = true;
+
+    void Start()
+    {
+        descriptionRenderer = SelectedItemDescription.GetComponent<SpriteRenderer>();
+        publishDestination = GameSettings.publishDestination;
+        _tabItems = TabItemsContainer.GetComponentsInChildren<TabItemScript>().ToList();
+        _imageBoardAnim = SelectedItemPicture.GetComponentInParent<Animator>();
+        _shopPanelAnim = ShopPanel.GetComponent<Animator>();
+        _storePanelAnim = GetComponent<Animator>();
+      
+        OnSelectionChanged(_tabItems.First().gameObject);
+        OnCoinChange();
+        SetupStore();
+    }
+	
+    private void SetupStore()
+    {
+        /*GameObject temp;
+        Vector2 tabSize = GUIUtility.GetSpriteSize(tabItem.GetComponentInChildren<SpriteRenderer>().sprite);
+        Vector3 position;
+        int cntr = 0;
+        position = tabItem.transform.position;*/
+        foreach (TabItemScript tis in _tabItems)
+        {
+            if (GameState.LastFailPurchasedItems != null && !GameState.LastFailPurchasedItems.Any())
+            {
+                var purchasedBefore = GameState.LastFailPurchasedItems.Select(x => x.Key).FirstOrDefault(x => x == tis.Kind);
+                if (purchasedBefore != null && GameState.LastFailPurchasedItems.ContainsKey(purchasedBefore))
+                {
+                    tis.Count.Number = GameState.LastFailPurchasedItems [purchasedBefore];
+                }
+            } else
+            {
+                _tabItems.ForEach(x => x.Count.Number = 0);
+            }
+        }
+    }
+
+    void Update()
+    {
+        if (_isFirstInAnim)
+        {
+            PauseScr.PauseAll();
+            _storePanelAnim.SetTrigger("In");
+
+            _isFirstInAnim = false;
+        }
+
+        Collider2D overlapColl = null;
+        if (Input.GetMouseButtonUp(0))
+        {
+            overlapColl = GetCollObject(Input.mousePosition);
+        }
+        
+        if (overlapColl != null)
+        {
+            if (overlapColl.gameObject == BtnInc && IsButtonEnabled(BtnInc))
+            {
+                var itemCount = _selectedTab.Count.Number;
+                if (itemCount < MaxItemsCount)
+                {
+                    IncreaseSelectedCount(1);
+                }
+            } else if (overlapColl.gameObject == BtnDec && IsButtonEnabled(BtnDec))
+            {
+                var itemCount = _selectedTab.Count.Number;
+                if (itemCount > 0)
+                {
+                    IncreaseSelectedCount(-1);
+                }
+            } else if (overlapColl.gameObject == BtnShop)
+            {
+                ShowPurchasePopup();
+            } else if (overlapColl.gameObject.transform.parent.gameObject == BtnPlay)
+            {
+
+                StartGameLevel();
+                PauseScr.ResumeAll();
+            } else if (overlapColl.gameObject.name.StartsWith("CoinShopButton"))
+            {
+                if (overlapColl.gameObject == CoinPack1)
+                {
+                    DoPurchase(IAPItem.CoinPack5000x99c);
+                } else if (overlapColl.gameObject == CoinPack2)
+                {
+                    DoPurchase(IAPItem.CoinPack12000x199c);
+                } else if (overlapColl.gameObject == CoinPack3)
+                {
+                    DoPurchase(IAPItem.CoinPack19000x299c);
+                } else if (overlapColl.gameObject == CoinPack4)
+                {
+                    DoPurchase(IAPItem.CoinPack35000x399c);
+                }
+            } else if (overlapColl.gameObject.name.StartsWith("TabItem"))
+            {
+                var tabItem = overlapColl.gameObject;
+                OnSelectionChanged(tabItem.gameObject);
+            }
+        }       
+    }
+
+    public void OnSelectionChanged(GameObject itemToSelect)
+    {
+        _selectedTab = itemToSelect.GetComponent<TabItemScript>();
+        _tabItems.ForEach(x => x.IsSelected = (_selectedTab.GetInstanceID() == x.GetInstanceID()));
+
+        _imageBoardAnim.SetTrigger("Shake");
+        SelectedItemPicture.sprite = _selectedTab.Picture;
+        descriptionRenderer.sprite = _selectedTab.Description;
+        OnCoinChange();
+    }
+
+    public void ShowPurchasePopup()
+    {
+        _shopPanelAnim.SetTrigger("Show");
+    }
+
+    public void HidePurchasePopup(IAPItem purchasedItem)
+    {
+        var purchasedCoins = purchasedItem.GetPrice();
+        var total = GameState.GetTotalCoins() + purchasedCoins;
+        GameState.ChangeTotalCoins(total);
+
+        OnCoinChange();
+
+        _shopPanelAnim.SetTrigger("Hide");
+    }
+
+    public void DoPurchase(IAPItem itemToPurchase)
+    {
+        // show indicator ...
+        if (IsTest)
+        {
+            int total = GameState.GetTotalCoins() + 1000;
+            GameState.ChangeTotalCoins(total);
+            OnCoinChange();
+            _shopPanelAnim.SetTrigger("Hide");
+        } else
+        {
+            switch (publishDestination)
+            {
+                case (PublishDestination.GooglePlayAndAppStore):
+                    IAPManager.PurchaseConsumableItem(itemToPurchase, (succeeded, error) => {
+                        if (!succeeded)
+                        {
+                            Debug.LogError(error);
+                        } else
+                        {
+                            HidePurchasePopup(itemToPurchase);
+                        }
+                    });
+                    break;
+                case (PublishDestination.Bazaar):
+                    Bazaar_IAPManager.PurchaseConsumableItem(itemToPurchase, (succeeded, error) => {
+                        if (!succeeded)
+                        {
+                            Debug.LogError(error);
+                        } else
+                        {
+                            HidePurchasePopup(itemToPurchase);
+                        }
+                    });
+                    break;
+            }
+        }
+    }   
+
+    // -------------------------- Privates -------------------------
+
+    private void StartGameLevel()
+    {
+        GameState.CurrentLevelPurchases = new Dictionary<PurchasedItems, int>();
+        GameState.CurrentLevelPurchases = _tabItems.Where(x => x.Count.Number > 0).ToDictionary(x => x.Kind, x => x.Count.Number);
+
+        //Start Level
+        ChapterLevelScr.StartLevel();
+
+        _storePanelAnim.SetTrigger("Out");
+    }
+
+    private void IncreaseSelectedCount(int inc)
+    {
+        var totalCoins = GameState.GetTotalCoins();
+        var remaningCoins = 0;
+        var itemCoinPrice = _selectedTab.Kind.GetItemCoinPrice();
+        if ((remaningCoins = totalCoins - (int)(Mathf.Sign(inc) * itemCoinPrice)) >= 0)
+        {
+            _selectedTab.Count.Number = _selectedTab.Count.Number + inc;
+
+            GameState.ChangeTotalCoins(remaningCoins);
+            OnCoinChange();
+        } else
+        {
+            // play not enough money anim of coins button
+        }
+    }
+
+    private void OnCoinChange() // use for tab change so
+    {
+        var remainingCoins = GameState.GetTotalCoins();
+        var selItemCoinPrice = _selectedTab.Kind.GetItemCoinPrice();
+
+        EnableButton(BtnInc, true);
+        EnableButton(BtnDec, true);
+
+        if (remainingCoins < selItemCoinPrice)
+        {
+            EnableButton(BtnInc, false);
+        } 
+
+        if (_selectedTab != null && _selectedTab.Count != null && _selectedTab.Count.Number <= 0)
+        {
+            EnableButton(BtnDec, false);
+        }
+
+        Coins.Number = remainingCoins;
+    }
+
+    private void EnableButton(GameObject btn, bool enable)
+    {
+        var btnEnable = btn.transform.FindChild("BtnEnabled").gameObject;
+        var btnDisable = btn.transform.FindChild("BtnDisabled").gameObject;
+
+        btnEnable.SetActive(enable);
+        btnDisable.SetActive(!enable);
+    }
+
+    private bool IsButtonEnabled(GameObject btn)
+    {
+        return btn.transform.FindChild("BtnEnabled").gameObject.activeSelf;
+    }
+
+    private Collider2D GetCollObject(Vector3 pos)
+    {
+        Vector3 wp = Camera.main.ScreenToWorldPoint(pos);
+        Vector2 touchPos = new Vector2(wp.x, wp.y);
+        
+        var overlapColl = Physics2D.OverlapPoint(touchPos);
+        
+        return overlapColl;
+    }
+}

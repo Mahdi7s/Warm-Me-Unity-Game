@@ -1,0 +1,206 @@
+﻿using UnityEngine;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+
+public class HatItemScript : PausableBehaviour
+{   
+    #region Definition
+    public GameObject AnimationChild = null;
+    public SlothScript sloth;
+    public List<ParticleSystem> SpecialParticles = null;
+    public List<Transform> SpecialChildren = null;
+    public HatItemKind Kind = HatItemKind.None;
+    public int Priority = 0;
+    public int Score = 0;
+    public int hatNo;
+    public int ShowingPercent = 0;
+    public int Temperature = 0;
+    public int ExplosionPower = 0;
+    public bool PlayInAnimAfterSpecial = true;
+    public int eggBronzeMinScore;
+    public int eggBronzeMaxScore;
+    public HatScript hat;
+    public HatItemsContainerScript hatItemsContainerScript;
+
+    protected Animator _anim = null;
+    protected bool _playSpecial = false;
+    protected GUINumberScript guiScript;
+    protected bool shouldAutomaticallyHit = false;
+    protected int reaction = 0;
+    protected float deltaTime;
+    protected float elapsedTime;
+
+    private string hatName; 
+    private float _inStateSeconds = 0.0f;
+    private int[] array = new int[3] ;
+    private bool isTriggered;
+    #endregion
+    	
+    public float HitProbabilityPercent
+    {
+        get
+        {
+            return ShowingPercent * 0.4f;
+        }
+    }     
+
+    public int goodRate{ get; private set; }
+    public int badRate{ get; private set; }
+
+    //------------------------------------- Privates ------------------------------
+    public virtual GameObject InstantiateNew(HatScript hatScr, float inStateSeconds)
+    {
+        if (hatScr != null && !hatScr.IsFalling())
+        {
+            hat = hatScr;
+            hatNo = hatScr.HatNo;
+            var retval = (GameObject)GameObject.Instantiate(this.gameObject);
+            retval.transform.parent = hatScr.ItemTransform;
+            retval.transform.rotation = hatScr.gameObject.transform.rotation;
+            retval.transform.localPosition = Vector3.zero;
+            if (Kind == HatItemKind.MatchBlue || Kind == HatItemKind.MatchRed || Kind == HatItemKind.MatchGreen || Kind == HatItemKind.MatchPink || Kind == HatItemKind.MatchYellow)
+            {
+                gameObject.transform.GetChild(0).transform.rotation = Quaternion.identity;
+            }
+            var scr = retval.GetComponent<HatItemScript>();
+            scr._inStateSeconds = inStateSeconds;
+            scr.hatNo = hatNo;
+            return retval;
+        }
+        return null;
+    }  
+    
+    protected virtual void Start()
+    {
+        isTriggered = false;
+        elapsedTime = 0.1f;
+        if (Kind == HatItemKind.EggBronze)
+        {
+            //guiScript = GetComponentInChildren<GUINumberScript>();
+            //guiScript.Hide();
+            Score = 0;
+            //customAnim = guiScript.GetComponentInChildren<Animator>();
+            //elapsedTime = 0.5f;
+        }//else{elapsedTime = 0.5f;}
+        array [0] = hatNo;
+        array [1] = Temperature;
+        array [2] = ExplosionPower;
+        ShowingPercent = Mathf.Clamp(ShowingPercent, 0, 100);
+        _anim = AnimationChild.GetComponent<Animator>();
+        _inStateSeconds = GameState.itemNormalSeconds;
+        //Debug.Log(_inStateSeconds);
+    }
+
+    protected override void POnGUI()
+    {
+    }
+
+    protected override void PFixedUpdate()
+    {
+    }
+    
+    protected override void PUpdate()
+    {
+        deltaTime = Time.deltaTime;
+        shouldAutomaticallyHit = hat.BoxOfMatches;
+        var state = _anim.GetCurrentAnimatorStateInfo(0);
+        if (state.IsName("Normal"))
+        {
+            if ((_inStateSeconds -= deltaTime) <= 0)
+            {
+                _anim.SetBool("Out", false);
+                _anim.SetBool("In", true);
+            }
+            if (shouldAutomaticallyHit && !_playSpecial && !isTriggered)
+            {
+                switch (Kind)
+                {
+                    case HatItemKind.MatchBlue:
+                    case HatItemKind.MatchGreen:
+                    case HatItemKind.MatchPink:
+                    case HatItemKind.MatchRed:
+                    case HatItemKind.MatchYellow:
+                        shouldAutomaticallyHit = false;
+                        hat.MatchBoxRunner.Fire();
+                        Hit();
+                        isTriggered = true;
+                        break;
+                }
+            }
+        }
+        if (_playSpecial)
+        {
+            if (!_anim.GetBool("Special"))
+            {   
+                if (SpecialParticles.Any())
+                {
+                    SpecialParticles.ForEach(x => x.Play());
+                }
+                if (SpecialChildren.Any())
+                {
+                    SpecialChildren.ForEach(x => x.gameObject.SetActive(true));
+                } 
+                _anim.SetBool("Special", true);
+                _playSpecial = false;
+            }
+        }
+        if (reaction > 0)
+        {
+            if (_anim.GetBool("Special"))
+            {
+                elapsedTime -= deltaTime;
+                if (elapsedTime <= 0.0f)
+                {
+                    switch (reaction)
+                    {
+                        case 1:
+                            foreach (PipeScript pipeScript in GameState.PipeScripts)
+                            {
+                                pipeScript.PipeReaction(array);
+                            }
+                            sloth.Upsidedown();
+                            reaction = 0;
+                            break;
+                        case 2:
+                            //guiScript.Show();
+                            //Score = guiScript.Number;
+                            Score = Random.Range(eggBronzeMinScore, eggBronzeMaxScore);
+                            hat.EnqueueCoin(Score);
+                            GameState.LevelCoins += (Score * GameState.Combo);
+                            //HatScript.KillTransformAndItsChildren(guiScript.transform, customAnim.playbackTime);
+                            reaction = 0;
+                            break;
+                    }
+                }
+            }
+        }
+    }
+    
+    protected virtual void Hit()
+    {
+        if (!_playSpecial)
+        {
+            _playSpecial = true;
+            if (Kind == HatItemKind.CigaretteBlue || Kind == HatItemKind.CigaretteGreen || Kind == HatItemKind.CigaretteYellow)
+            {
+                reaction = 1;
+            } else if (Kind == HatItemKind.EggBronze)
+            {
+                reaction = 2;
+                //guiScript.Number = Random.Range(eggBronzeMinScore, eggBronzeMaxScore);
+                //guiScript.transform.parent = Camera.main.transform;
+            } else
+            {
+                foreach (PipeScript pipeScript in GameState.PipeScripts)
+                {
+                    pipeScript.PipeReaction(array);
+                }
+            }
+            hatItemsContainerScript.RecordItem(Kind.IsPositiveItem());
+            GameState.LevelCoins += (Score * GameState.Combo);
+            GameState.ChangeTemperature(Temperature);
+            /**/
+        }
+    }
+}

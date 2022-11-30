@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>dynamicLibraries</key>
+	<array/>
+	<key>requiredFrameworks</key>
+	<array>
+		<string>StoreKit.framework</string>
+	</array>
+	<key>pListAdditions</key>
+	<array/>
+	<key>weakLinkFrameworks</key>
+	<array>
+		<string>StoreKit</string>
+	</array>
+	<key>linkerFlags</key>
+	<array>
+		<string>-ObjC</string>
+	</array>
+	<key>neverShowCompletedMessage</key>
+	<false/>
+</dict>
+</plist>

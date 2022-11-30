@@ -1,0 +1,79 @@
+﻿using UnityEngine;
+using System.Collections;
+
+public class TimeScript : PausableBehaviour
+{
+    public GameObject timeStep;
+    public GameObject board;
+    public Collider2D menuIconCollider;
+    public int numberOfStepsInACircle;
+    public float animationLength;
+
+    public float LevelTime
+    {
+        get;
+        private set;
+    }
+
+    public float Speed
+    {
+        get;
+        set;
+    }
+	
+    private int cntr, numberOfInstances;
+    private float elapsedTime;
+    private GameObject temp;
+
+    private Animator stopWatchAnim;
+
+    private Vector3 position, rotation, scale;
+
+    void Awake()
+    {
+        rotation = new Vector3(0f, 0f, 0f);
+        scale = timeStep.transform.localScale;
+        position = timeStep.transform.position;
+        cntr = numberOfInstances = 1;
+        LevelTime = Camera.main.GetComponentInChildren<ChapterLevelScript>().LevelDurationSecs;
+        //LevelTime = 5.0f;
+        stopWatchAnim = gameObject.GetComponent<Animator>();
+        Speed = animationLength / LevelTime;
+        elapsedTime = 0.0f;
+        stopWatchAnim.speed = Speed;
+        stopWatchAnim.SetBool("Run", true);
+    }
+
+    protected override void PUpdate()
+    {
+        if (LevelTime > elapsedTime)
+        {
+            elapsedTime += Time.deltaTime;
+            cntr = (int)(elapsedTime * numberOfStepsInACircle / LevelTime);
+            while (numberOfInstances<cntr)
+            {
+                rotation.z -= (360.0f / numberOfStepsInACircle);
+                temp = (GameObject)Instantiate(timeStep, position, Quaternion.Euler(rotation));
+                temp.transform.parent = transform.parent;
+                temp.transform.localScale = scale;
+                numberOfInstances++;
+            }
+            stopWatchAnim.speed = Speed;
+        } else if (LevelTime != 0.0f)
+        {
+            menuIconCollider.enabled = false;
+            LevelTime = 0.0f;
+            stopWatchAnim.SetBool("Run", false);
+            stopWatchAnim.speed = 0.0f;
+            board.GetComponent<BoardScript>().ShowScore();
+        }
+    }
+
+    protected override void PFixedUpdate()
+    {
+    }
+    
+    protected override void POnGUI()
+    {
+    }
+}

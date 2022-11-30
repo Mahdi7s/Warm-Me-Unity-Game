@@ -1,0 +1,30 @@
+﻿using UnityEngine;
+using System.Collections;
+
+public class InitializeScript : MonoBehaviour
+{
+    public Font font;
+    public int fontSize;
+    public Color fontColor;
+    public Rect rectangle;
+    public bool ClearPrefsBeforeInit = false;
+    public static string debugger;
+    void Awake()
+    {
+        /*Pause it*/
+        if (ClearPrefsBeforeInit) // this is good for testing
+        {
+            PlayerPrefs.DeleteAll();
+        }
+        GameState.IntializeProperties();
+        debugger += "Hello\n";
+    }
+
+    void OnGUI()
+    {
+        GUI.skin.font = font;
+        GUI.skin.label.fontSize = fontSize;
+        GUI.contentColor = fontColor;
+        GUI.Label(rectangle, InitializeScript.debugger);
+    }
+}

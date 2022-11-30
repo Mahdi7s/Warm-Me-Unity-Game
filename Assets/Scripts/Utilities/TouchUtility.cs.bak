@@ -1,0 +1,36 @@
+﻿using UnityEngine;
+using System.Collections;
+
+public class TouchUtility
+{   
+    public static Collider2D GetTouchedCollider()
+    {
+        if (Input.GetMouseButtonUp(0))
+        {
+            Vector3 wp = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            Vector2 touchPos = new Vector2(wp.x, wp.y);
+            
+            var overlapColl = Physics2D.OverlapPoint(touchPos);
+            
+            return overlapColl;
+        }
+        return null;
+    }
+
+    public static Vector2 GetTouchScroll()
+    {
+        Vector2 deltaPos = Vector2.zero;
+        if (Input.GetMouseButtonDown(0))
+        {
+            Vector3 startPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            Vector3 deltaPosition = Vector3.zero;
+            while (!Input.GetMouseButtonUp(0))
+            {
+                deltaPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition) - startPosition;
+            }
+            deltaPos.x = deltaPosition.x;
+            deltaPos.y = deltaPosition.y;
+        }
+        return deltaPos;
+    }
+}

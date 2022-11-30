@@ -1,0 +1,162 @@
+﻿using UnityEngine;
+using System.Collections;
+using System.Linq;
+
+public enum HatState
+{
+    Normal,
+    Outing,
+    Special,
+    Inning
+}
+
+public class HatScript : MonoBehaviour
+{
+    private Animator _hatAnim = null;
+    private GameObject _currentItem = null;
+    private HatItemScript _currentItemScript = null;
+    private Animator _currentItemAnim = null;
+    private GameObject _nextItem = null;
+    private bool _shouldFall = false;
+    private bool isFalling = false;
+	public ChapterLevelScript ChapterLevelScript = null;
+    public GameObject HatChild = null;
+    public ParticleSystem OutParticle = null;
+    public Transform ItemTransform;    
+    public HatState State { get; private set; }
+    public bool BoxOfMatches{ get; set; }
+    public bool MagicWand{ get; set; }
+    public MatchBoxRunnerScript MatchBoxRunner{ get; set; }
+
+    public GameObject NextItem
+    { 
+        get
+        {
+            return _nextItem;
+        } 
+        set
+        {
+            if (_nextItem == null)
+            { 
+                _nextItem = value;
+				if(MagicWand) {
+                    var item = _nextItem.GetComponent<HatItemScript>();
+                    if(!item.Kind.IsPositiveItem())
+                    {
+                        var randPositiveKind = HatItemKind.None.GetRandomPositive();
+                        var newItem = this.ChapterLevelScript.HatItems.FirstOrDefault(x => x.Kind == randPositiveKind);
+                        _nextItem = newItem.gameObject;
+                    }
+                }
+            }
+        }
+    }
+    
+    public bool CanShowNewItem
+    {
+        get{ return (_nextItem == null && _currentItem == null && _hatAnim.GetCurrentAnimatorStateInfo(0).IsName("Idle"));}
+    }
+
+    public int HatNo
+   { get; private set; }
+    
+    // Use this for initialization
+    void Start()
+    {
+        _hatAnim = HatChild.GetComponent<Animator>();
+        HatNo = int.Parse(gameObject.name.Substring(3));
+    }
+    
+    // Update is called once per frame
+    void Update()
+    {
+        if (!isFalling)
+        {
+            if (_currentItem == null)
+            {
+                if (_nextItem != null)
+                {
+                    _currentItem = _nextItem;
+                    _currentItemScript = _currentItem.GetComponent<HatItemScript>();
+                    SetCurrentItemAnimator();
+                    _currentItemAnim.SetBool("Out", true);
+                    _hatAnim.SetBool("In", false);
+                    _hatAnim.SetBool("Out", true);
+                    OutParticle.Play();
+                    _nextItem = null;
+                }
+            }
+        
+            if (_currentItem != null)
+            {
+                var animState = _currentItemAnim.GetCurrentAnimatorStateInfo(0);
+            
+                if (animState.IsName("Out"))
+                {
+                    State = HatState.Outing;
+                
+                } else if (animState.IsName("Normal"))
+                {
+                    State = HatState.Normal;
+                
+                } else if (animState.IsName("In"))
+                {
+                    State = HatState.Inning;               
+                } else if (animState.IsName("End"))
+                {
+                    GameObject.Destroy(_currentItem);
+                    if(_currentItemScript.PlayInAnimAfterSpecial){
+                        _hatAnim.SetBool("In", true);
+                        _hatAnim.SetBool("Out", false);
+                    }
+                    _currentItem = null;
+                    _currentItemAnim = null;
+                    _currentItemScript = null;
+                    if (_shouldFall)
+                    {
+                        for (int cntr=0; cntr<transform.childCount; cntr++)
+                        {
+                            if (transform.GetChild(cntr).gameObject.name != "hat")
+                            {
+                                KillTransformAndItsChildren(transform.GetChild(cntr));
+                            }
+                        }
+                        _hatAnim.SetBool("Fall", true);
+                        Destroy(gameObject, 5.0f);
+                        isFalling = true;
+                    }
+                    return;
+                }
+            }
+        }
+    }
+
+    private void SetCurrentItemAnimator()
+    {
+        _currentItemAnim = _currentItemScript.AnimationChild.GetComponent<Animator>();
+    }
+
+    public void Fall()
+    {
+        _shouldFall = true;
+    }
+
+    public bool IsFalling()
+    {
+        return isFalling;
+    }
+
+    void KillTransformAndItsChildren(Transform t)
+    {
+        if (t.childCount <= 0)
+        {
+            Destroy(t.gameObject);
+        } else
+        {
+            for (int cntr=0; cntr<t.childCount; cntr++)
+            {
+                KillTransformAndItsChildren(t.GetChild(cntr));
+            }
+        }
+    }
+}

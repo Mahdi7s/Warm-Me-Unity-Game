@@ -1,0 +1,8 @@
+<!-- ACTIVITIES -->
+		<activity android:name="com.prime31.GoogleIABProxyActivity" android:configChanges="orientation|layoutDirection|keyboard|keyboardHidden|screenLayout|uiMode|screenSize"></activity>
+
+
+<!-- PERMISSIONS -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="com.android.vending.BILLING" />
+

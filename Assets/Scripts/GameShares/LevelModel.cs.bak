@@ -1,0 +1,19 @@
+﻿public class LevelModel
+{
+    public int Level{ set; get; }
+    public int Chapter{ set; get; }
+    public int LevelCoins{ set; get; }
+
+    public override string ToString()
+    {
+        return string.Format("{0},{1},{2}", Chapter, Level, LevelCoins);
+    }
+
+    public LevelModel(string str)
+    {
+        string[] array = str.Split(',');
+        Chapter = int.Parse(array [0]);
+        Level = int.Parse(array [1]);
+        LevelCoins = int.Parse(array [2]);
+    }
+}

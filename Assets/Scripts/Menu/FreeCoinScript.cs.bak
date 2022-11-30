@@ -1,0 +1,21 @@
+﻿using UnityEngine;
+using System.Collections;
+using System;
+
+public class FreeCoinScript : MonoBehaviour {
+
+    [Range(0, 16)]
+    public float HoursToNextChance = 8.0f;
+	
+	void Awake () {
+        if (GameState.LastFreeCoinChanceTime.AddHours(HoursToNextChance) < DateTime.Now)
+        {
+            enabled = false;
+        }
+	}
+	
+	// Update is called once per frame
+	void Update () {
+	
+	}
+}

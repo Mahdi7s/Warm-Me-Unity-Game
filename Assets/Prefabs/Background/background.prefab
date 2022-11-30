@@ -1,0 +1,106 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &100000
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 4
+  m_Component:
+  - 4: {fileID: 400000}
+  - 212: {fileID: 21200000}
+  - 114: {fileID: 11400000}
+  m_Layer: 0
+  m_Name: background
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &400000
+Transform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 100000}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 1.01492286, z: 0}
+  m_LocalScale: {x: 1.10000002, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 100000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 01bffa8aa898b437183cd5617f7b5303, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  pathName: MousePath
+  pathColor: {r: 0, g: 0, b: 0, a: 1}
+  nodes:
+  - {x: -1.9622674, y: -3.89937758, z: 0}
+  - {x: -1.78616619, y: -2.98113704, z: 0}
+  - {x: .138364971, y: -2.93082261, z: 0}
+  - {x: 1.81132376, y: -2.93082213, z: 0}
+  - {x: 1.96226692, y: -1.79874492, z: 0}
+  - {x: -.389937997, y: -1.66038024, z: 0}
+  - {x: -1.87421703, y: -1.50943661, z: 0}
+  - {x: -1.86163819, y: -.45283094, z: 0}
+  - {x: -.515724421, y: -.264151454, z: 0}
+  - {x: -.503145456, y: .893083274, z: 0}
+  - {x: -1.8490597, y: 1.08176279, z: 0}
+  - {x: -1.9622674, y: 2.25157642, z: 0}
+  - {x: -1.74843049, y: 3.82390594, z: 0}
+  - {x: -.0754718035, y: 3.76101232, z: 0}
+  - {x: 1.63522279, y: 3.74843383, z: 0}
+  - {x: 2.0377388, y: 3.14465928, z: 0}
+  - {x: 1.59748685, y: 2.55346346, z: 0}
+  - {x: -.792454243, y: 2.37736249, z: 0}
+  - {x: -.855347514, y: 1.76100922, z: 0}
+  - {x: .389938116, y: 1.23270655, z: 0}
+  - {x: 2.02516055, y: 1.0691843, z: 0}
+  - {x: 2.15094686, y: .301887393, z: 0}
+  - {x: 1.40880728, y: .163522288, z: 0}
+  nodeCount: 23
+  initialized: 1
+  initialName: New Path 1
+  pathVisible: 1
+--- !u!212 &21200000
+SpriteRenderer:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 100000}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_LightmapIndex: 255
+  m_LightmapTilingOffset: {x: 1, y: 1, z: 0, w: 0}
+  m_Materials:
+  - {fileID: 10754, guid: 0000000000000000e000000000000000, type: 0}
+  m_SubsetIndices: 
+  m_StaticBatchRoot: {fileID: 0}
+  m_UseLightProbes: 0
+  m_LightProbeAnchor: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_SortingLayer: 1
+  m_SortingOrder: -1
+  m_SortingLayerID: 417018737
+  m_Sprite: {fileID: 21300000, guid: 9e5c061d646b61f4f8ab6ca67eb28d56, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+--- !u!1001 &100100000
+Prefab:
+  m_ObjectHideFlags: 1
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications: []
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 0}
+  m_RootGameObject: {fileID: 100000}
+  m_IsPrefabParent: 1
+  m_IsExploded: 1

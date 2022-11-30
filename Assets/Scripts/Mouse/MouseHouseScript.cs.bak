@@ -1,0 +1,49 @@
+﻿using UnityEngine;
+using System.Collections;
+using System.Collections.Generic;
+
+public class MouseHouseScript : MonoBehaviour
+{
+    #region Definitions
+    MousePathScript[] paths;
+    List<MouseObjectsData> modl = new List<MouseObjectsData>();
+    MousePathScript path;
+    bool isGone;
+    float elapsedTime;
+    int pathIndex;
+
+    public MouseHouseContainerScript MHCScript
+    { set; private get; }
+
+    public float TimeWindow
+    { set; private get; }
+
+    public int NumberOfMouses
+    { set; private get; }
+
+    public Transform MousePrefab
+    { set; private get; }
+
+    public Transform MouseTrapPlaced
+    { set; private get; }
+    #endregion
+
+    void Start()
+    {
+        paths = GetComponentsInChildren<MousePathScript>();
+        if (TimeWindow > 0f)
+        {
+            float triggerTime;
+            MousePathScript mps;
+            MouseObjectsData mod;
+            for (int cntr=0; cntr<NumberOfMouses; cntr++)
+            {
+                triggerTime = cntr * TimeWindow + Random.value * TimeWindow;
+                mps = paths [Random.Range(0, paths.Length)];
+                mod = new MouseObjectsData(triggerTime, mps);
+                modl.Add(mod);
+            }
+        }
+        MHCScript.AddToMouseObjectDataList(modl);
+    }
+}

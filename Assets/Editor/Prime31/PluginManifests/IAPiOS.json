@@ -1,0 +1,1 @@
+{"pluginName":"IAP","version":"2.2","itemNumber":"StoreKit-plugin","platform":"iOS","items":[{"path":"Assets/Editor/Prime31/PluginManifests/IAPiOS.json","isFolder":false},{"path":"Assets/Editor/StoreKit","isFolder":true},{"path":"Assets/Plugins/StoreKit","isFolder":true}]}

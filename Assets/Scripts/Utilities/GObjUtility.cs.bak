@@ -1,0 +1,12 @@
+﻿using UnityEngine;
+using System.Collections;
+using System.Linq;
+
+public static class GObjUtility {
+    public static void DisableContent(GameObject gobj, bool disable){
+        foreach (var g in gobj.GetComponentsInChildren<Renderer>())
+        {
+            g.enabled = !disable;
+        }
+    }
+}
